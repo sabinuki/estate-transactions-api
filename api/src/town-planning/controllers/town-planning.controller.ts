@@ -1,12 +1,8 @@
-import {
-  Controller,
-  Get,
-  Query,
-  BadRequestException,
-  Inject,
-} from '@nestjs/common';
+import { Controller, Get, Query, Inject } from '@nestjs/common';
 import type { TownPlanningUseCaseInterface } from '../use-cases';
-import { INTERFACES, YEARS_AVAILABLE_RANGE } from '../town-planning.constants';
+import { INTERFACES } from '../town-planning.constants';
+import { GetEstateTransactionRequestDto } from './dto/requests';
+import { GetEstateTransactionResponseDto } from './dto/responses';
 
 @Controller('api/v1/townPlanning')
 export class TownPlanningController {
@@ -17,30 +13,16 @@ export class TownPlanningController {
 
   @Get('estateTransaction/bar')
   async getEstateTransaction(
-    @Query('year') year?: string,
-    @Query('prefCode') prefectureCode?: string,
-    @Query('type') type?: string,
-  ) {
-    if (!year || !prefectureCode || !type) {
-      throw new BadRequestException(
-        'Missing required query parameters: year, prefCode, type are all required',
-      );
-    }
-
-    const yearNumber = Number(year);
-    if (
-      yearNumber < YEARS_AVAILABLE_RANGE.min ||
-      yearNumber > YEARS_AVAILABLE_RANGE.max
-    ) {
-      throw new BadRequestException(
-        'Invalid year: must be between 2009 and 2021',
-      );
-    }
-
-    return this.useCase.getEstateTransaction({
-      year,
-      prefectureCode,
-      type,
+    @Query() query: GetEstateTransactionRequestDto,
+  ): Promise<GetEstateTransactionResponseDto> {
+    const result = await this.useCase.getEstateTransaction({
+      year: query.year,
+      prefectureCode: query.prefCode,
+      type: query.type,
     });
+
+    return {
+      data: result,
+    };
   }
 }

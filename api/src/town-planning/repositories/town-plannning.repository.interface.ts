@@ -1,8 +1,8 @@
 export interface TownPlanningRepositoryInterface {
   getEstateTransaction(query: {
-    year: string;
-    prefectureCode: string;
-    type: string;
+    year: number;
+    prefectureCode: number;
+    type: number;
   }): Promise<EstateTransactionData[]>;
 }
 
