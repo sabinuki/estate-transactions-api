@@ -1,4 +1,3 @@
-import { EstateTransactionData } from '../repositories';
 import type { TownPlanningRepositoryInterface } from '../repositories';
 import { Inject, Injectable } from '@nestjs/common';
 import { INTERFACES } from '../town-planning.constants';
@@ -8,13 +7,14 @@ import {
   KANTO_PREFECTURES_CODES,
   TYPE,
 } from './town-planning.use-case.constants';
+import type { UseCaseDataType } from './types';
 
 export interface TownPlanningUseCaseInterface {
   getEstateTransaction(query: {
-    year: string;
-    prefectureCode: string;
-    type: string;
-  }): Promise<EstateTransactionData[]>;
+    year: number;
+    prefectureCode: number;
+    type: number;
+  }): Promise<UseCaseDataType[]>;
 }
 
 @Injectable()
@@ -25,34 +25,40 @@ export class TownPlanningUseCase implements TownPlanningUseCaseInterface {
   ) {}
 
   async getEstateTransaction(query: {
-    year: string;
-    prefectureCode: string;
-    type: string;
-  }): Promise<EstateTransactionData[]> {
+    year: number;
+    prefectureCode: number;
+    type: number;
+  }): Promise<UseCaseDataType[]> {
     this.validateBizRules(query);
 
-    return this.repository.getEstateTransaction(query);
+    const result = await this.repository.getEstateTransaction(query);
+
+    return result.map((item) => ({
+      prefectureCode: item.data.result.prefectureCode,
+      prefectureName: item.data.result.prefectureName,
+      type: item.data.result.type,
+      years: item.data.result.years.map((year) => ({
+        year: year.year,
+        value: year.value,
+      })),
+    }));
   }
 
   private validateBizRules(query: {
-    year: string;
-    prefectureCode: string;
-    type: string;
+    year: number;
+    prefectureCode: number;
+    type: number;
   }): void {
-    const year = Number(query.year);
-    const prefectureCode = Number(query.prefectureCode);
-    const type = Number(query.type);
-
     if (
-      year < YEARS_VALIDATION_RANGE.min ||
-      year > YEARS_VALIDATION_RANGE.max
+      query.year < YEARS_VALIDATION_RANGE.min ||
+      query.year > YEARS_VALIDATION_RANGE.max
     ) {
       throw new BadRequestException('No data available for the specified year');
     }
 
     if (
       !KANTO_PREFECTURES_CODES.includes(
-        prefectureCode as (typeof KANTO_PREFECTURES_CODES)[number],
+        query.prefectureCode as (typeof KANTO_PREFECTURES_CODES)[number],
       )
     ) {
       throw new BadRequestException(
@@ -61,7 +67,9 @@ export class TownPlanningUseCase implements TownPlanningUseCaseInterface {
     }
 
     if (
-      !Object.values(TYPE).includes(type as (typeof TYPE)[keyof typeof TYPE])
+      !Object.values(TYPE).includes(
+        query.type as (typeof TYPE)[keyof typeof TYPE],
+      )
     ) {
       throw new BadRequestException('No data available for the specified type');
     }

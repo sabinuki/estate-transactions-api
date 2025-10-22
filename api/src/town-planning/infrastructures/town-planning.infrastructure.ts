@@ -18,18 +18,18 @@ export class TownPlanningInfrastructure
   }
 
   async getEstateTransaction(query: {
-    year: string;
-    prefectureCode: string;
-    type: string;
+    year: number;
+    prefectureCode: number;
+    type: number;
   }): Promise<EstateTransactionData[]> {
     try {
       const rawData = fs.readFileSync(this.jsonFilePath, 'utf-8');
       const estateTransactions = JSON.parse(rawData) as EstateTransactionData[];
       const filteredData = estateTransactions.filter((item) => {
         return (
-          item.data.result.years[0].year === Number(query.year) &&
-          item.data.result.prefectureCode === query.prefectureCode &&
-          item.data.result.type === query.type
+          item.data.result.years[0].year === query.year &&
+          item.data.result.prefectureCode === query.prefectureCode.toString() &&
+          item.data.result.type === query.type.toString()
         );
       });
 
